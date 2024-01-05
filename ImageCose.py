@@ -70,7 +70,7 @@ def add_info_bar(folder_path):
 
             bar_height = int(img.height * 0.12) # Bar的高度
             feather = bar_height // 4  # 羽化调整
-            gradient_bar = linear_gradient('#f7a8b8', '#99CCFF', img.width, bar_height, 180)
+            gradient_bar = linear_gradient('#A05060', '#336699', img.width, bar_height, 180)
             mask = create_feathered_mask(gradient_bar.width, bar_height, feather)
 
             img_with_bar = Image.new('RGB', (img.width, img.height + gradient_bar.height - feather))
@@ -82,10 +82,10 @@ def add_info_bar(folder_path):
             font = ImageFont.truetype("./Components/Fonts/AlibabaPuHuiTi-3-115-Black.ttf", font_size)  # 使用自定义字体
 
             text_line1 = f'ISO: {iso} | F/{f_formatted} | {exposure_time}S | {focal_length}MM'
-            draw.text((10, img.height - feather + 5), text_line1, fill=(255, 245, 238), font=font)
+            draw.text((10, img.height - feather + 5), text_line1, fill=(255,240,245), font=font)
 
             text_line2 = f'日期: {date_time}'
-            draw.text((10, img.height + bar_height // 2 - feather + 5), text_line2, fill=(255, 245, 238), font=font)
+            draw.text((10, img.height + bar_height // 2 - feather + 5), text_line2, fill=(255,240,245), font=font)
 
             if camera_make:
                 logo_path = os.path.join(logo_folder, f'{camera_make.values[0]}.jpg')
