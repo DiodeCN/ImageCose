@@ -5,6 +5,22 @@ import rawpy
 import numpy as np
 
 
+def linear_gradient(start_color, end_color, width, height, angle):
+    """ 创建一个线性渐变的背景 """
+    base = Image.new('RGB', (width, height), start_color)
+    top = Image.new('RGB', (width, height), end_color)
+
+    mask = Image.new('L', (width, height))
+    mask_data = []
+    for y in range(height):
+        for x in range(width):
+            mask_data.append(int(255 * (x / width)))
+    mask.putdata(mask_data)
+
+    base.paste(top, (0, 0), mask)
+    return base.rotate(angle)
+
+
 def add_info_bar(folder_path):
     # 遍历文件夹中的所有文件
     for filename in os.listdir(folder_path):
@@ -28,23 +44,34 @@ def add_info_bar(folder_path):
 
             # 提取所需的 EXIF 信息
             iso = exif_data.get('EXIF ISOSpeedRatings')
-            shutter_speed = exif_data.get('EXIF ShutterSpeedValue')
-            aperture = exif_data.get('EXIF ApertureValue')
+            f = exif_data.get('EXIF FNumber')
+            exposure_time = exif_data.get('EXIF ExposureTime')
+            focal_length = exif_data.get('EXIF FocalLength')
             date_time = exif_data.get('EXIF DateTimeOriginal')
 
-            # 创建一个带信息的白色横条
-            bar_height = 50
-            img_with_bar = Image.new('RGB', (img.width, img.height + bar_height), 'white')
+            bar_height = int(img.height * 0.1)
+            gradient_bar = linear_gradient('#f7a8b8', '#99CCFF', img.width, bar_height, 0)
+            img_with_bar = Image.new('RGB', (img.width, img.height + gradient_bar.height))
             img_with_bar.paste(img, (0, 0))
+            img_with_bar.paste(gradient_bar, (0, img.height))
 
             draw = ImageDraw.Draw(img_with_bar)
-            font = ImageFont.load_default()
-            text = f'ISO: {iso}, Shutter Speed: {shutter_speed}, Aperture: {aperture}, Date: {date_time}'
-            draw.text((10, img.height + 10), text, fill='black', font=font)
+
+            # 根据横条的高度设置字体大小
+            font_size = int(bar_height * 0.36)  # 根据需要调整这个比例
+            font = ImageFont.truetype(".\Components\Fonts\AlibabaPuHuiTi-3-115-Black.ttf", font_size)  # 使用自定义字体
+
+            # 绘制第一行文本
+            text_line1 = f'ISO: {iso}|F/{f}|{exposure_time}S|{focal_length}MM'
+            draw.text((10, img.height + 5), text_line1, fill='white', font=font)
+
+            # 绘制第二行文本
+            text_line2 = f'日期: {date_time}'
+            draw.text((10, img.height + bar_height // 2 + 5), text_line2, fill='white', font=font)
 
             # 保存或显示图片
             img_with_bar.show()
 
 
 # 使用文件夹路径调用函数
-add_info_bar('D:\ImageCose\Image')
+add_info_bar('.\Image')
