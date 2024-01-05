@@ -36,10 +36,10 @@ def create_feathered_mask(width, height, feather):
 def add_info_bar(folder_path):
     # Iterate over all the files in the folder
     for filename in os.listdir(folder_path):
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.cr2', '.arw')):
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.cr2', '.arw', '.nef', '.rw2', '.raf')):
             image_path = os.path.join(folder_path, filename)
 
-            if filename.lower().endswith(('.cr2', '.arw')):
+            if filename.lower().endswith(( '.cr2', '.arw', '.nef', '.rw2', '.raf')):
                 with rawpy.imread(image_path) as raw:
                     rgb = raw.postprocess()
                 img = Image.fromarray(rgb)
@@ -54,8 +54,13 @@ def add_info_bar(folder_path):
             f = exif_data.get('EXIF FNumber')
             exposure_time = exif_data.get('EXIF ExposureTime')
             focal_length = exif_data.get('EXIF FocalLength')
-            date_time = exif_data.get('EXIF DateTimeOriginal')
             camera_make = exif_data.get('Image Make')  # 读取相机制造商信息
+            camera_model = exif_data.get('Image Model')  # 从EXIF中获取相机型号
+            date_time = exif_data.get('EXIF DateTimeOriginal')
+            if date_time:
+                formatted_date_time = date_time.values.replace(':', '/', 2)
+            else:
+                formatted_date_time = "未知时间"
 
             if f is not None:
                 f_value = str(f)  # 将光圈值转换为字符串
@@ -69,8 +74,8 @@ def add_info_bar(folder_path):
                 f_formatted = "未知"
 
             bar_height = int(img.height * 0.12) # Bar的高度
-            feather = bar_height // 4  # 羽化调整
-            gradient_bar = linear_gradient('#A05060', '#336699', img.width, bar_height, 180)
+            feather = bar_height // 8  # 羽化调整
+            gradient_bar = linear_gradient('#f7a8b8', '#99CCFF', img.width, bar_height, 180)
             mask = create_feathered_mask(gradient_bar.width, bar_height, feather)
 
             img_with_bar = Image.new('RGB', (img.width, img.height + gradient_bar.height - feather))
@@ -84,8 +89,18 @@ def add_info_bar(folder_path):
             text_line1 = f'ISO: {iso} | F/{f_formatted} | {exposure_time}S | {focal_length}MM'
             draw.text((10, img.height - feather + 5), text_line1, fill=(255,240,245), font=font)
 
-            text_line2 = f'日期: {date_time}'
+            text_line2 = formatted_date_time
             draw.text((10, img.height + bar_height // 2 - feather + 5), text_line2, fill=(255,240,245), font=font)
+
+            if camera_model:
+                camera_model_text = camera_model.values if camera_model else '未知型号'
+                text_width, text_height = draw.textsize(camera_model_text, font=font)
+
+                # 计算在条形图中心放置文本的位置
+                text_x = (img.width - text_width) // 2 + img.width * 0.2
+                text_y = img.height + (bar_height - text_height) // 2 - feather
+
+                draw.text((text_x, text_y), camera_model_text, fill=(212,242,231), font=font)
 
             if camera_make:
                 logo_path = os.path.join(logo_folder, f'{camera_make.values[0]}.jpg')
