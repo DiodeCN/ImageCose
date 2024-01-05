@@ -49,15 +49,28 @@ def add_info_bar(folder_path):
             with open(image_path, 'rb') as f:
                 exif_data = exifread.process_file(f)
 
+            logo_folder = './Components/Logos'  # Logo文件夹路径
             iso = exif_data.get('EXIF ISOSpeedRatings')
             f = exif_data.get('EXIF FNumber')
             exposure_time = exif_data.get('EXIF ExposureTime')
             focal_length = exif_data.get('EXIF FocalLength')
             date_time = exif_data.get('EXIF DateTimeOriginal')
+            camera_make = exif_data.get('Image Make')  # 读取相机制造商信息
 
-            bar_height = int(img.height * 0.1)
-            feather = bar_height // 6  # 羽化调整
-            gradient_bar = linear_gradient('#f7a8b8', '#99CCFF', img.width, bar_height, 0)
+            if f is not None:
+                f_value = str(f)  # 将光圈值转换为字符串
+                if '/' in f_value:
+                    numerator, denominator = f_value.split('/')
+                    f_number = float(numerator) / float(denominator)
+                    f_formatted = f"{f_number:.1f}"  # 保留一位小数
+                else:
+                    f_formatted = f_value
+            else:
+                f_formatted = "未知"
+
+            bar_height = int(img.height * 0.12) # Bar的高度
+            feather = bar_height // 4  # 羽化调整
+            gradient_bar = linear_gradient('#f7a8b8', '#99CCFF', img.width, bar_height, 180)
             mask = create_feathered_mask(gradient_bar.width, bar_height, feather)
 
             img_with_bar = Image.new('RGB', (img.width, img.height + gradient_bar.height - feather))
@@ -65,14 +78,37 @@ def add_info_bar(folder_path):
             img_with_bar.paste(gradient_bar, (0, img.height - feather), mask)
 
             draw = ImageDraw.Draw(img_with_bar)
-            font_size = int(bar_height * 0.36)
-            font = ImageFont.truetype(".\Components\Fonts\AlibabaPuHuiTi-3-115-Black.ttf", font_size)  # 使用自定义字体
+            font_size = int(bar_height * 0.38)
+            font = ImageFont.truetype("./Components/Fonts/AlibabaPuHuiTi-3-115-Black.ttf", font_size)  # 使用自定义字体
 
-            text_line1 = f'ISO: {iso} | F/{f} | {exposure_time}S | {focal_length}MM'
-            draw.text((10, img.height - feather + 5), text_line1, fill='white', font=font)
+            text_line1 = f'ISO: {iso} | F/{f_formatted} | {exposure_time}S | {focal_length}MM'
+            draw.text((10, img.height - feather + 5), text_line1, fill=(255, 245, 238), font=font)
 
             text_line2 = f'日期: {date_time}'
-            draw.text((10, img.height + bar_height // 2 - feather + 5), text_line2, fill='white', font=font)
+            draw.text((10, img.height + bar_height // 2 - feather + 5), text_line2, fill=(255, 245, 238), font=font)
+
+            if camera_make:
+                logo_path = os.path.join(logo_folder, f'{camera_make.values[0]}.jpg')
+                if os.path.exists(logo_path):
+                    logo = Image.open(logo_path)
+
+                    # 保持纵横比调整尺寸
+                    aspect_ratio = logo.width / logo.height
+                    new_height = int(bar_height * 0.85)
+                    new_width = int(bar_height * 0.85 * aspect_ratio)
+                    logo = logo.resize((new_width, new_height))
+
+                    if logo.mode == 'RGBA':
+                        # 分离出透明度蒙版
+                        logo_mask = logo.split()[3]
+                    else:
+                        # 如果没有透明度通道，不使用蒙版
+                        logo_mask = None
+
+                    # 使用透明度蒙版（如果有的话）粘贴logo
+                    img_with_bar.paste(logo, (
+                        img.width - new_width - int(new_width * 0.2),
+                        img.height + (bar_height - new_height) // 2 - feather), logo_mask)
 
             img_with_bar.show()
 
