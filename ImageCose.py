@@ -58,6 +58,8 @@ def add_info_bar(folder_path):
             camera_make = exif_data.get('Image Make')  # 读取相机制造商信息
             camera_model = exif_data.get('Image Model')  # 从EXIF中获取相机型号
             date_time = exif_data.get('EXIF DateTimeOriginal')
+            artist = exif_data.get('EXIF Artist')
+
             if date_time:
                 formatted_date_time = date_time.values.replace(':', '/', 2)
             else:
@@ -74,9 +76,9 @@ def add_info_bar(folder_path):
             else:
                 f_formatted = "未知"
 
-            bar_height = int(img.height * 0.12)  # Bar的高度
-            feather = bar_height // 8  # 羽化调整
-            gradient_bar = linear_gradient('#f7a8b8', '#99CCFF', img.width, bar_height, 0)
+            bar_height = int(img.height * 0.123)  # Bar的高度
+            feather = bar_height // 25  # 羽化调整
+            gradient_bar = linear_gradient('#FEEFF5', '#F0F4FF', img.width, bar_height, 180)
             mask = create_feathered_mask(gradient_bar.width, bar_height, feather)
 
             img_with_bar = Image.new('RGB', (img.width, img.height + gradient_bar.height - feather))
@@ -85,25 +87,37 @@ def add_info_bar(folder_path):
 
             draw = ImageDraw.Draw(img_with_bar)
             font_size = int(bar_height * 0.38)
-            font = ImageFont.truetype("./Components/Fonts/AlibabaPuHuiTi-3-115-Black.ttf", font_size)  # 使用自定义字体
+            fontHeavy = ImageFont.truetype("./Components/Fonts/AlibabaPuHuiTi-3-95-ExtraBold.ttf", font_size)  # 使用自定义字体
+            fontBlack = ImageFont.truetype("./Components/Fonts/AlibabaPuHuiTi-3-115-Black.ttf", int(font_size * 1.35))  # 使用自定义字体
+            signfont = ImageFont.truetype("./Components/Fonts/Meticulous-Regular.ttf", int(font_size * 1.65))  # 使用自定义字体
+            timefont = ImageFont.truetype("./Components/Fonts/Ubuntu-M.ttf", font_size)  # 使用自定义字体
 
-            text_line1 = f'ISO: {iso} | F/{f_formatted} | {exposure_time}S | {focal_length}MM'
-            draw.text((10, img.height - feather + 5), text_line1, fill=(255, 240, 245), font=font)
+            text_line1 = f'ISO-{iso} | F/{f_formatted} | {exposure_time}S | {focal_length}MM'
+            draw.text((10, img.height - feather + 5), text_line1, fill='#35467A', font=fontHeavy)
 
-            text_line2 = formatted_date_time
-            draw.text((10, img.height + bar_height // 2 - feather + 5), text_line2, fill=(255, 240, 245), font=font)
+            # 修改后的 text_line2 部分
+            artist_text = (' -' + artist.values[0] if artist else ' -ElmCose')
+            date_text_x = 10
+            date_text_y = img.height + bar_height // 2 - feather + 5
+
+            # 使用 timefont 绘制日期
+            draw.text((date_text_x, date_text_y), formatted_date_time, fill='#35467A', font=timefont)
+            date_text_width, _ = draw.textsize(formatted_date_time, font=timefont)
+            artist_text_x = date_text_x + date_text_width
+            # 使用 timefont 绘制签名
+            draw.text((artist_text_x, date_text_y * 0.98), artist_text, fill='#800000', font=signfont)
 
             if camera_make:
                 logo_path = os.path.join(logo_folder, f'{camera_make.values[0]}.jpg')
                 if os.path.exists(logo_path):
                     logo = Image.open(logo_path)
                     aspect_ratio = logo.width / logo.height
-                    new_height = int(bar_height * 0.78)
-                    new_width = int(bar_height * 0.75 * aspect_ratio)
+                    new_height = int(bar_height * 0.8)
+                    new_width = int(bar_height * 0.78 * aspect_ratio)
 
                     logo = logo.resize((new_width, new_height))
                     logo_x = img.width - new_width - int(new_width * 0.2)
-                    logo_y = img.height + (bar_height - new_height) // 2 - feather + new_height // 12  # 煞费苦心的修改Y对齐
+                    logo_y = img.height + (bar_height - new_height) // 2 - feather + new_height // 16  # 煞费苦心的修改Y对齐
 
                     if logo.mode == 'RGBA':
                         # 分离出透明度蒙版
@@ -117,11 +131,11 @@ def add_info_bar(folder_path):
 
                     if camera_model:
                         camera_model_text = camera_model.values if camera_model else '未知型号'
-                        text_width, text_height = draw.textsize(camera_model_text, font=font)
-                        text_x = logo_x - text_width - 10  # 在图标左侧留出10像素的间距
-                        text_y = img.height + (bar_height - text_height) // 2 - feather
+                        text_width, text_height = draw.textsize(camera_model_text, font=fontBlack)
+                        text_x = logo_x - text_width * 1.18   # 之前是跑10现在跑1.18
+                        text_y = img.height * 0.99 + (bar_height - text_height) // 2 - feather
 
-                        draw.text((text_x, text_y), camera_model_text, fill=(212, 242, 231), font=font)
+                        draw.text((text_x, text_y), f'{camera_model_text} | ', fill=(47, 79, 79), font=fontBlack)
 
             img_with_bar.show()
 
