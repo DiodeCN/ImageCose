@@ -36,10 +36,11 @@ def create_feathered_mask(width, height, feather):
 def add_info_bar(folder_path):
     # Iterate over all the files in the folder
     for filename in os.listdir(folder_path):
-        if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.cr2', '.arw', '.nef', '.rw2', '.raf')):
+        if filename.lower().endswith(
+                ('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif', '.cr2', '.arw', '.nef', '.rw2', '.raf')):
             image_path = os.path.join(folder_path, filename)
 
-            if filename.lower().endswith(( '.cr2', '.arw', '.nef', '.rw2', '.raf')):
+            if filename.lower().endswith(('.cr2', '.arw', '.nef', '.rw2', '.raf')):
                 with rawpy.imread(image_path) as raw:
                     rgb = raw.postprocess()
                 img = Image.fromarray(rgb)
@@ -73,9 +74,9 @@ def add_info_bar(folder_path):
             else:
                 f_formatted = "未知"
 
-            bar_height = int(img.height * 0.12) # Bar的高度
+            bar_height = int(img.height * 0.12)  # Bar的高度
             feather = bar_height // 8  # 羽化调整
-            gradient_bar = linear_gradient('#f7a8b8', '#99CCFF', img.width, bar_height, 180)
+            gradient_bar = linear_gradient('#f7a8b8', '#99CCFF', img.width, bar_height, 0)
             mask = create_feathered_mask(gradient_bar.width, bar_height, feather)
 
             img_with_bar = Image.new('RGB', (img.width, img.height + gradient_bar.height - feather))
@@ -87,31 +88,22 @@ def add_info_bar(folder_path):
             font = ImageFont.truetype("./Components/Fonts/AlibabaPuHuiTi-3-115-Black.ttf", font_size)  # 使用自定义字体
 
             text_line1 = f'ISO: {iso} | F/{f_formatted} | {exposure_time}S | {focal_length}MM'
-            draw.text((10, img.height - feather + 5), text_line1, fill=(255,240,245), font=font)
+            draw.text((10, img.height - feather + 5), text_line1, fill=(255, 240, 245), font=font)
 
             text_line2 = formatted_date_time
-            draw.text((10, img.height + bar_height // 2 - feather + 5), text_line2, fill=(255,240,245), font=font)
-
-            if camera_model:
-                camera_model_text = camera_model.values if camera_model else '未知型号'
-                text_width, text_height = draw.textsize(camera_model_text, font=font)
-
-                # 计算在条形图中心放置文本的位置
-                text_x = (img.width - text_width) // 2 + img.width * 0.2
-                text_y = img.height + (bar_height - text_height) // 2 - feather
-
-                draw.text((text_x, text_y), camera_model_text, fill=(212,242,231), font=font)
+            draw.text((10, img.height + bar_height // 2 - feather + 5), text_line2, fill=(255, 240, 245), font=font)
 
             if camera_make:
                 logo_path = os.path.join(logo_folder, f'{camera_make.values[0]}.jpg')
                 if os.path.exists(logo_path):
                     logo = Image.open(logo_path)
-
-                    # 保持纵横比调整尺寸
                     aspect_ratio = logo.width / logo.height
-                    new_height = int(bar_height * 0.85)
-                    new_width = int(bar_height * 0.85 * aspect_ratio)
+                    new_height = int(bar_height * 0.78)
+                    new_width = int(bar_height * 0.75 * aspect_ratio)
+
                     logo = logo.resize((new_width, new_height))
+                    logo_x = img.width - new_width - int(new_width * 0.2)
+                    logo_y = img.height + (bar_height - new_height) // 2 - feather + new_height // 12  # 煞费苦心的修改Y对齐
 
                     if logo.mode == 'RGBA':
                         # 分离出透明度蒙版
@@ -121,9 +113,15 @@ def add_info_bar(folder_path):
                         logo_mask = None
 
                     # 使用透明度蒙版（如果有的话）粘贴logo
-                    img_with_bar.paste(logo, (
-                        img.width - new_width - int(new_width * 0.2),
-                        img.height + (bar_height - new_height) // 2 - feather), logo_mask)
+                    img_with_bar.paste(logo, (logo_x, logo_y), logo_mask)
+
+                    if camera_model:
+                        camera_model_text = camera_model.values if camera_model else '未知型号'
+                        text_width, text_height = draw.textsize(camera_model_text, font=font)
+                        text_x = logo_x - text_width - 10  # 在图标左侧留出10像素的间距
+                        text_y = img.height + (bar_height - text_height) // 2 - feather
+
+                        draw.text((text_x, text_y), camera_model_text, fill=(212, 242, 231), font=font)
 
             img_with_bar.show()
 
