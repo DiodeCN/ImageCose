@@ -3,6 +3,13 @@ import exifread
 import os
 import rawpy
 
+brand_names = ['Canon', 'Sony', 'Nikon', 'Fujifilm', 'Panasonic', 'Olympus', 'Leica', 'Pentax', 'Hasselblad', 'Ricoh']
+
+def remove_brand_names(model_text, brand_names):
+    """Remove brand names from the model text."""
+    for brand in brand_names:
+        model_text = model_text.replace(brand, '')
+    return model_text.strip()  # 去除可能出现的前后空格
 
 def linear_gradient(start_color, end_color, width, height, angle):
     """Create a linear gradient background"""
@@ -136,8 +143,10 @@ def add_info_bar(folder_path):
 
                     if camera_model:
                         camera_model_text = camera_model.values if camera_model else '未知型号'
+                        # 在展示之前去除商标名
+                        camera_model_text = remove_brand_names(camera_model_text, brand_names)
                         text_width, text_height = draw.textsize(camera_model_text, font=fontBlack)
-                        text_x = logo_x - text_width * 1.18  # 之前是跑10现在跑1.18
+                        text_x = logo_x * 0.96 - text_width  # 假设您想在文本和Logo之间留出10像素的间隙
                         text_y = img.height * 0.99 + (bar_height - text_height) // 2 - feather
 
                         draw.text((text_x, text_y), f'{camera_model_text} | ', fill=(47, 79, 79), font=fontBlack)
@@ -147,6 +156,7 @@ def add_info_bar(folder_path):
 
                         # 保存处理后的图像为 JPEG 格式
                         img_with_bar.save(output_path, 'JPEG')
+                        img_with_bar.show(output_path)
 
                         # 打印处理完成的消息
                         print(f'处理完成：{output_filename}')
