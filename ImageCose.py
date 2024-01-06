@@ -5,16 +5,14 @@ import rawpy
 
 brand_names = ['Canon', 'Sony', 'Nikon', 'Fujifilm', 'Panasonic', 'Olympus', 'Leica', 'Pentax', 'Hasselblad', 'Ricoh']
 
+
 def remove_brand_names(model_text, brand_names):
     """Remove brand names from the model text."""
     for brand in brand_names:
         model_text = model_text.replace(brand, '')
     return model_text.strip()  # 去除可能出现的前后空格
 
-def add_info_bar(folder_path):
-    output_folder = './Output'
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+
 
 def linear_gradient(start_color, end_color, width, height, angle):
     """Create a linear gradient background"""
@@ -169,5 +167,6 @@ def add_info_bar(folder_path):
 
                         # 打印处理完成的消息
                         print(f'处理完成：{output_filename}')
+
 
 add_info_bar('./Image')
