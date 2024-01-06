@@ -11,6 +11,11 @@ def remove_brand_names(model_text, brand_names):
         model_text = model_text.replace(brand, '')
     return model_text.strip()  # 去除可能出现的前后空格
 
+def add_info_bar(folder_path):
+    output_folder = './Output'
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
 def linear_gradient(start_color, end_color, width, height, angle):
     """Create a linear gradient background"""
     base = Image.new('RGB', (width, height), start_color)
@@ -87,6 +92,8 @@ def add_info_bar(folder_path):
             else:
                 f_formatted = "未知"
 
+            is_portrait = img.height > img.width
+
             bar_height = int(img.height * 0.123)  # Bar的高度
             feather = bar_height // 25  # 羽化调整
             gradient_bar = linear_gradient('#FEEFF5', '#F0F4FF', img.width, bar_height, 180)
@@ -100,24 +107,22 @@ def add_info_bar(folder_path):
             font_size = int(bar_height * 0.38)
             fontHeavy = ImageFont.truetype("./Components/Fonts/AlibabaPuHuiTi-3-95-ExtraBold.ttf", font_size)  # 使用自定义字体
             fontBlack = ImageFont.truetype("./Components/Fonts/AlibabaPuHuiTi-3-115-Black.ttf",
-                                           int(font_size * 1.35))  # 使用自定义字体
+                                           int(font_size * 1.25))  # 使用自定义字体
             signfont = ImageFont.truetype("./Components/Fonts/Meticulous-Regular.ttf", int(font_size * 1.65))  # 使用自定义字体
             timefont = ImageFont.truetype("./Components/Fonts/Ubuntu-M.ttf", font_size)  # 使用自定义字体
 
-            text_line1 = f'ISO-{iso} | F/{f_formatted} | {exposure_time}S | {focal_length}MM'
-            draw.text((10, img.height - feather + 5), text_line1, fill='#35467A', font=fontHeavy)
+            if not is_portrait:
+                text_line1 = f'ISO-{iso} | F/{f_formatted} | {exposure_time}S | {focal_length}MM'
+                draw.text((10, img.height - feather + 5), text_line1, fill='#35467A', font=fontHeavy)
 
-            # 修改后的 text_line2 部分
-            artist_text = (' -' + artist.values[0] if artist else ' -ElmCose')
-            date_text_x = 10
-            date_text_y = img.height + bar_height // 2 - feather + 5
+                artist_text = (' -' + artist.values[0] if artist else ' -ElmCose')
+                date_text_x = 10
+                date_text_y = img.height + bar_height // 2 - feather + 5
 
-            # 使用 timefont 绘制日期
-            draw.text((date_text_x, date_text_y), formatted_date_time, fill='#35467A', font=timefont)
-            date_text_width, _ = draw.textsize(formatted_date_time, font=timefont)
-            artist_text_x = date_text_x + date_text_width
-            # 使用 timefont 绘制签名
-            draw.text((artist_text_x, date_text_y * 0.98), artist_text, fill='#800000', font=signfont)
+                draw.text((date_text_x, date_text_y), formatted_date_time, fill='#35467A', font=timefont)
+                date_text_width, _ = draw.textsize(formatted_date_time, font=timefont)
+                artist_text_x = date_text_x + date_text_width
+                draw.text((artist_text_x, date_text_y * 0.98), artist_text, fill='#800000', font=signfont)
 
             if camera_make:
                 logo_path = os.path.join(logo_folder, f'{camera_make.values[0]}.jpg')
@@ -146,9 +151,13 @@ def add_info_bar(folder_path):
                         # 在展示之前去除商标名
                         camera_model_text = remove_brand_names(camera_model_text, brand_names)
                         text_width, text_height = draw.textsize(camera_model_text, font=fontBlack)
-                        text_x = logo_x * 0.96 - text_width  # 假设您想在文本和Logo之间留出10像素的间隙
-                        text_y = img.height * 0.99 + (bar_height - text_height) // 2 - feather
 
+                        if is_portrait:
+                            text_x = logo_x * 0.92 - text_width
+                        else:
+                            text_x = logo_x * 0.97 - text_width
+
+                        text_y = img.height * 0.99 + (bar_height - text_height) // 2 - feather
                         draw.text((text_x, text_y), f'{camera_model_text} | ', fill=(47, 79, 79), font=fontBlack)
 
                         output_filename = os.path.splitext(filename)[0] + '.jpg'
