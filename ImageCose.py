@@ -175,7 +175,7 @@ def add_info_bar(folder_path):
         os.makedirs(output_folder)
 
     threads = []
-    max_threads = 10  # 您可以根据您的系统资源调整这个数字
+    max_threads = 64  # 您可以根据您的系统资源调整这个数字
 
     for filename in os.listdir(folder_path):
         if filename.lower().endswith(
