@@ -34,6 +34,10 @@ def create_feathered_mask(width, height, feather):
 
 
 def add_info_bar(folder_path):
+    output_folder = './Output'
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
     # Iterate over all the files in the folder
     for filename in os.listdir(folder_path):
         if filename.lower().endswith(
@@ -88,7 +92,8 @@ def add_info_bar(folder_path):
             draw = ImageDraw.Draw(img_with_bar)
             font_size = int(bar_height * 0.38)
             fontHeavy = ImageFont.truetype("./Components/Fonts/AlibabaPuHuiTi-3-95-ExtraBold.ttf", font_size)  # 使用自定义字体
-            fontBlack = ImageFont.truetype("./Components/Fonts/AlibabaPuHuiTi-3-115-Black.ttf", int(font_size * 1.35))  # 使用自定义字体
+            fontBlack = ImageFont.truetype("./Components/Fonts/AlibabaPuHuiTi-3-115-Black.ttf",
+                                           int(font_size * 1.35))  # 使用自定义字体
             signfont = ImageFont.truetype("./Components/Fonts/Meticulous-Regular.ttf", int(font_size * 1.65))  # 使用自定义字体
             timefont = ImageFont.truetype("./Components/Fonts/Ubuntu-M.ttf", font_size)  # 使用自定义字体
 
@@ -132,12 +137,18 @@ def add_info_bar(folder_path):
                     if camera_model:
                         camera_model_text = camera_model.values if camera_model else '未知型号'
                         text_width, text_height = draw.textsize(camera_model_text, font=fontBlack)
-                        text_x = logo_x - text_width * 1.18   # 之前是跑10现在跑1.18
+                        text_x = logo_x - text_width * 1.18  # 之前是跑10现在跑1.18
                         text_y = img.height * 0.99 + (bar_height - text_height) // 2 - feather
 
                         draw.text((text_x, text_y), f'{camera_model_text} | ', fill=(47, 79, 79), font=fontBlack)
 
-            img_with_bar.show()
+                        output_filename = os.path.splitext(filename)[0] + '.jpg'
+                        output_path = os.path.join(output_folder, output_filename)
 
+                        # 保存处理后的图像为 JPEG 格式
+                        img_with_bar.save(output_path, 'JPEG')
+
+                        # 打印处理完成的消息
+                        print(f'处理完成：{output_filename}')
 
 add_info_bar('./Image')
