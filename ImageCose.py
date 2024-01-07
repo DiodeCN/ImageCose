@@ -199,7 +199,7 @@ def add_info_bar(folder_path):
     end_time = time.time()  # 结束计时
     total_time = end_time - start_time
 
-    print(f"所有图像处理完成。用时 {total_time:.2f} 秒。")
+#    print(f"所有图像处理完成。用时 {total_time:.2f} 秒。")
 
 # 调用函数处理整个文件夹
 add_info_bar('./Image')
