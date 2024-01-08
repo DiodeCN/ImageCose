@@ -1,6 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import exifread
 import os
+import sys
 import time
 import rawpy
 import threading
@@ -70,7 +71,8 @@ def process_image(image_path):
     camera_make = exif_data.get('Image Make')  # 读取相机制造商信息
     camera_model = exif_data.get('Image Model')  # 从EXIF中获取相机型号
     date_time = exif_data.get('EXIF DateTimeOriginal')
-    artist = exif_data.get('EXIF Artist')
+    artist = exif_data.get('Image Copyright')
+    print(artist)
 
     if date_time:
         formatted_date_time = date_time.values.replace(':', '/', 2)
@@ -109,13 +111,13 @@ def process_image(image_path):
 
     if not is_portrait:
         text_line1 = f'ISO-{iso} | F/{f_formatted} | {exposure_time}S | {focal_length}MM'
-        draw.text((10, img.height - feather + 5), text_line1, fill='#35467A', font=fontHeavy)
+        draw.text((10, img.height - feather + 5), text_line1, fill='#032582', font=fontHeavy)
 
         artist_text = (' -' + artist.values[0] if artist else ' -ElmCose')
         date_text_x = 10
         date_text_y = img.height + bar_height // 2 - feather + 5
 
-        draw.text((date_text_x, date_text_y), formatted_date_time, fill='#35467A', font=timefont)
+        draw.text((date_text_x, date_text_y), formatted_date_time, fill='#032582', font=timefont)
         date_text_width, _ = draw.textsize(formatted_date_time, font=timefont)
         artist_text_x = date_text_x + date_text_width
         draw.text((artist_text_x, date_text_y * 0.98), artist_text, fill='#800000', font=signfont)
@@ -154,7 +156,7 @@ def process_image(image_path):
                     text_x = logo_x * 0.97 - text_width
 
                 text_y = img.height * 0.99 + (bar_height - text_height) // 2 - feather
-                draw.text((text_x, text_y), f'{camera_model_text} | ', fill=(47, 79, 79), font=fontBlack)
+                draw.text((text_x, text_y), f'{camera_model_text} | ', fill='#00520A', font=fontBlack)
 
                 output_filename = os.path.splitext(filename)[0] + '.jpg'
                 output_path = os.path.join(output_folder, output_filename)
@@ -175,7 +177,7 @@ def add_info_bar(folder_path):
         os.makedirs(output_folder)
 
     threads = []
-    max_threads = 64  # 您可以根据您的系统资源调整这个数字
+    max_threads = 32   # 您可以根据您的系统资源调整这个数字
 
     for filename in os.listdir(folder_path):
         if filename.lower().endswith(
@@ -199,7 +201,9 @@ def add_info_bar(folder_path):
     end_time = time.time()  # 结束计时
     total_time = end_time - start_time
 
-#    print(f"所有图像处理完成。用时 {total_time:.2f} 秒。")
+    print(f"所有图像处理完成。用时 {total_time:.2f} 秒。")
 
 # 调用函数处理整个文件夹
+print(sys.executable)
+print(sys.version)
 add_info_bar('./Image')
